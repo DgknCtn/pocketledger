@@ -48,7 +48,7 @@ struct MonthlySummaryCard: View {
     /// insight-quality rules, which apply here too).
     private var comparisonText: String? {
         guard let previousMonthExpense else { return nil }
-        guard let roundedPercent = PercentageChange.compute(current: expense, previous: previousMonthExpense) else {
+        guard let roundedPercent = Percentage.changeFrom(previous: previousMonthExpense, to: expense) else {
             return nil
         }
 

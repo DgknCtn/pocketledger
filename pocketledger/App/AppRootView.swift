@@ -15,10 +15,16 @@ import os
 /// them per render would silently reset loaded data and re-fetch
 /// constantly.
 struct AppRootView: View {
+    private enum Tab: String, Hashable {
+        case dashboard, accounts, transactions, analytics
+    }
+
     @State private var appContainer: AppContainer
     @State private var dashboardViewModel: DashboardViewModel
     @State private var accountListViewModel: AccountListViewModel
     @State private var transactionListViewModel: TransactionListViewModel
+    @State private var analyticsViewModel: AnalyticsViewModel
+    @State private var selectedTab: Tab = .dashboard
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
@@ -27,6 +33,12 @@ struct AppRootView: View {
         #if DEBUG
         if container.environment == .uiTesting {
             container.appLockController.bypassForUITesting()
+        }
+        // -selectedTab <name> lets UI tests (and manual verification) deep
+        // link straight to a tab instead of needing a real tap; DEBUG-only,
+        // same as the auth bypass above.
+        if let requested = Self.tab(fromLaunchArguments: ProcessInfo.processInfo.arguments) {
+            _selectedTab = State(initialValue: requested)
         }
         #endif
 
@@ -62,26 +74,49 @@ struct AppRootView: View {
                 )
             )
         )
+
+        _analyticsViewModel = State(
+            initialValue: AnalyticsViewModel(
+                transactionRepository: container.transactionRepository,
+                walletProfileRepository: container.walletProfileRepository
+            )
+        )
     }
+
+    #if DEBUG
+    private static func tab(fromLaunchArguments arguments: [String]) -> Tab? {
+        guard let flagIndex = arguments.firstIndex(of: "-selectedTab"), flagIndex + 1 < arguments.count else {
+            return nil
+        }
+        return Tab(rawValue: arguments[flagIndex + 1])
+    }
+    #endif
 
     var body: some View {
         ZStack {
             if appContainer.appLockController.isLocked {
                 LockView(appLockController: appContainer.appLockController)
             } else {
-                TabView {
+                TabView(selection: $selectedTab) {
                     DashboardView(
                         viewModel: dashboardViewModel,
                         transactionListViewModel: transactionListViewModel,
                         accountListViewModel: accountListViewModel
                     )
                     .tabItem { Label("Dashboard", systemImage: "house") }
+                    .tag(Tab.dashboard)
 
                     AccountListView(viewModel: accountListViewModel)
                         .tabItem { Label("Accounts", systemImage: "creditcard") }
+                        .tag(Tab.accounts)
 
                     TransactionListView(viewModel: transactionListViewModel)
                         .tabItem { Label("Transactions", systemImage: "list.bullet.rectangle") }
+                        .tag(Tab.transactions)
+
+                    AnalyticsView(viewModel: analyticsViewModel)
+                        .tabItem { Label("Analytics", systemImage: "chart.pie") }
+                        .tag(Tab.analytics)
                 }
             }
 

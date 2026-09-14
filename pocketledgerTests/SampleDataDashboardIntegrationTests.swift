@@ -5,7 +5,7 @@ import Testing
 /// Exercises `LoadDashboardUseCase`'s monthly aggregation against the
 /// *real* `SampleDataFactory` output rather than hand-rolled fixtures —
 /// this is what actually caught the `NSDecimalNumber.intValue` precision
-/// bug described in `PercentageChange`: every other test used round,
+/// bug described in `Percentage`: every other test used round,
 /// low-precision fixture amounts that happened not to trigger it.
 struct SampleDataDashboardIntegrationTests {
     @Test func currentAndPreviousMonthExpenseTotalsMatchTheGeneratedFixtures() async throws {
@@ -40,7 +40,7 @@ struct SampleDataDashboardIntegrationTests {
         let snapshot = try await useCase.refresh()
 
         let previousExpense = try #require(snapshot.previousMonthExpense)
-        let percent = try #require(PercentageChange.compute(current: snapshot.monthlyExpense, previous: previousExpense))
+        let percent = try #require(Percentage.changeFrom(previous: previousExpense, to: snapshot.monthlyExpense))
         #expect(percent != 0)
     }
 }
