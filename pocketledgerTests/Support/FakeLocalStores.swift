@@ -2,16 +2,22 @@ import Foundation
 import os
 @testable import pocketledger
 
-/// In-memory `AccountLocalStore` used by repository tests (Phase 5) so
-/// those tests never touch real SwiftData.
+/// In-memory `AccountLocalStore` used by repository tests so those tests
+/// never touch real SwiftData. `failUpsert`/`failFetch` let a test simulate
+/// "remote succeeded, local cache write failed" without needing a second,
+/// SwiftData-backed test double.
 final class FakeAccountLocalStore: AccountLocalStore, @unchecked Sendable {
     private let storage = OSAllocatedUnfairLock<[UUID: Account]>(initialState: [:])
+    var failUpsert = false
+    var failFetch = false
 
     func fetchAll(userID: UUID, currency: CurrencyCode) async throws -> [Account] {
-        storage.withLock { Array($0.values) }
+        if failFetch { throw PersistenceError.fetchFailed }
+        return storage.withLock { Array($0.values) }
     }
 
     func upsert(_ account: Account, userID: UUID) async throws {
+        if failUpsert { throw PersistenceError.saveFailed }
         storage.withLock { $0[account.id] = account }
     }
 
@@ -22,16 +28,24 @@ final class FakeAccountLocalStore: AccountLocalStore, @unchecked Sendable {
     func reconcile(_ accounts: [Account], userID: UUID) async throws {
         storage.withLock { $0 = Dictionary(uniqueKeysWithValues: accounts.map { ($0.id, $0) }) }
     }
+
+    func seed(_ account: Account) {
+        storage.withLock { $0[account.id] = account }
+    }
 }
 
 final class FakeTransactionLocalStore: TransactionLocalStore, @unchecked Sendable {
     private let storage = OSAllocatedUnfairLock<[UUID: Transaction]>(initialState: [:])
+    var failUpsert = false
+    var failFetch = false
 
     func fetchAll(userID: UUID, currency: CurrencyCode) async throws -> [Transaction] {
-        storage.withLock { Array($0.values) }
+        if failFetch { throw PersistenceError.fetchFailed }
+        return storage.withLock { Array($0.values) }
     }
 
     func upsert(_ transaction: Transaction, userID: UUID) async throws {
+        if failUpsert { throw PersistenceError.saveFailed }
         storage.withLock { $0[transaction.id] = transaction }
     }
 
@@ -41,6 +55,10 @@ final class FakeTransactionLocalStore: TransactionLocalStore, @unchecked Sendabl
 
     func reconcile(_ transactions: [Transaction], userID: UUID) async throws {
         storage.withLock { $0 = Dictionary(uniqueKeysWithValues: transactions.map { ($0.id, $0) }) }
+    }
+
+    func seed(_ transaction: Transaction) {
+        storage.withLock { $0[transaction.id] = transaction }
     }
 }
 
@@ -52,6 +70,10 @@ final class FakeWalletProfileLocalStore: WalletProfileLocalStore, @unchecked Sen
     }
 
     func upsert(_ profile: WalletProfile, userID: UUID) async throws {
+        storage.withLock { $0 = profile }
+    }
+
+    func seed(_ profile: WalletProfile) {
         storage.withLock { $0 = profile }
     }
 }
