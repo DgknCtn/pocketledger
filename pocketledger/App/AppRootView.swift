@@ -16,6 +16,7 @@ import os
 /// constantly.
 struct AppRootView: View {
     @State private var appContainer: AppContainer
+    @State private var dashboardViewModel: DashboardViewModel
     @State private var accountListViewModel: AccountListViewModel
     @State private var transactionListViewModel: TransactionListViewModel
     @Environment(\.scenePhase) private var scenePhase
@@ -51,6 +52,16 @@ struct AppRootView: View {
                 updateTransactionUseCase: UpdateTransactionUseCase(transactionRepository: container.transactionRepository)
             )
         )
+
+        _dashboardViewModel = State(
+            initialValue: DashboardViewModel(
+                loadDashboardUseCase: LoadDashboardUseCase(
+                    accountRepository: container.accountRepository,
+                    transactionRepository: container.transactionRepository,
+                    walletProfileRepository: container.walletProfileRepository
+                )
+            )
+        )
     }
 
     var body: some View {
@@ -59,6 +70,13 @@ struct AppRootView: View {
                 LockView(appLockController: appContainer.appLockController)
             } else {
                 TabView {
+                    DashboardView(
+                        viewModel: dashboardViewModel,
+                        transactionListViewModel: transactionListViewModel,
+                        accountListViewModel: accountListViewModel
+                    )
+                    .tabItem { Label("Dashboard", systemImage: "house") }
+
                     AccountListView(viewModel: accountListViewModel)
                         .tabItem { Label("Accounts", systemImage: "creditcard") }
 
