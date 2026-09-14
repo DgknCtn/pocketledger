@@ -3,16 +3,40 @@ import os
 
 /// Composition root for the visible app.
 ///
-/// This is intentionally minimal in Phase 0/1: there is no networking, no
-/// persistence and no Face ID lock yet, so it only proves that the project
-/// structure, environment and logging foundation build and launch. App-lock
-/// state (`AppPhase`), `AppContainer` dependency wiring and the real
-/// `TabView` shell are added once Networking/Auth/SwiftData (later phases)
-/// exist to back them.
+/// Face ID app-lock is wired up here; the real `TabView` shell, dashboard
+/// content, networking and SwiftData-backed data still don't exist yet
+/// (added once Accounts/Transactions features land) — `readyContent` is a
+/// placeholder proving the lock flow gates *something*.
 struct AppRootView: View {
+    @State private var appLockController = AppLockController(
+        localAuthenticationService: DefaultLocalAuthenticationService()
+    )
+    @Environment(\.scenePhase) private var scenePhase
+
     private let environment = AppEnvironment.resolve()
 
     var body: some View {
+        ZStack {
+            if appLockController.isLocked {
+                LockView(appLockController: appLockController)
+            } else {
+                readyContent
+            }
+
+            if scenePhase != .active && !appLockController.isLocked {
+                PrivacyShieldView()
+            }
+        }
+        .animation(.default, value: appLockController.isLocked)
+        .onChange(of: scenePhase) { _, newPhase in
+            appLockController.handleScenePhaseChange(newPhase)
+        }
+        .onAppear {
+            AppLogger.general.info("App launched in \(String(describing: environment), privacy: .public) environment")
+        }
+    }
+
+    private var readyContent: some View {
         VStack(spacing: 8) {
             Text("PocketLedger")
                 .font(.largeTitle.bold())
@@ -21,9 +45,6 @@ struct AppRootView: View {
                 .foregroundStyle(.secondary)
         }
         .padding()
-        .onAppear {
-            AppLogger.general.info("App launched in \(String(describing: environment), privacy: .public) environment")
-        }
     }
 }
 
