@@ -63,6 +63,16 @@ final class AppLockController {
         await authenticate()
     }
 
+    #if DEBUG
+    /// Skips real biometric/passcode authentication entirely. Only ever
+    /// called for `AppEnvironment.uiTesting` (see `AppRootView`), and only
+    /// exists in DEBUG builds — see the Architecture specification's "UI
+    /// Test Environment" (this must never ship in a Release build).
+    func bypassForUITesting() {
+        phase = .unlocked
+    }
+    #endif
+
     /// Called from `AppRootView` on every `scenePhase` change. Background
     /// duration under `securityPolicy.reauthenticationInterval` leaves the
     /// unlocked state alone (the privacy shield still covers the content

@@ -6,7 +6,7 @@ import Foundation
 /// Domain code. `demo` lets the app run against deterministic sample data
 /// without touching the production backend; `uiTesting` lets UI tests run
 /// against known, network-independent state.
-enum AppEnvironment: Sendable {
+enum AppEnvironment: Sendable, Equatable {
     case development
     case production
     case demo
