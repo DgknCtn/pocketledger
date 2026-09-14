@@ -1,0 +1,4785 @@
+# PocketLedger — Implementation Roadmap & Delivery Plan
+
+Document Type: Implementation Roadmap
+Product: PocketLedger — Personal Finance & Wallet
+Target Role: Junior iOS Developer Portfolio
+Platform: iOS 17+
+Language: Swift 6
+UI: SwiftUI
+Architecture: MVVM + Pragmatic Clean Architecture
+Remote: Supabase REST / PostgreSQL
+Local: SwiftData
+Testing: Swift Testing + XCTest/XCUITest
+CI: GitHub Actions
+
+Previous:
+PRD
+→ Tech Stack
+→ Architecture
+→ Database Design
+→ API Contract
+
+Current:
+Implementation Roadmap
+
+---
+
+# 1. TL;DR
+
+PocketLedger aşağıdaki sırayla geliştirilecektir:
+
+Phase 0
+Project Foundation
+
+Phase 1
+Domain Foundation
+
+Phase 2
+Networking Foundation
+
+Phase 3
+Remote Authentication & Session
+
+Phase 4
+SwiftData Persistence
+
+Phase 5
+Repositories & Remote/Local Coordination
+
+Phase 6
+App Lock / Face ID
+
+Phase 7
+Account Management
+
+Phase 8
+Transaction CRUD
+
+Phase 9
+Dashboard
+
+Phase 10
+Analytics
+
+Phase 11
+Spending Insights
+
+Phase 12
+Offline, Error & Recovery UX
+
+Phase 13
+Testing Hardening
+
+Phase 14
+Accessibility, Dark Mode & UX Polish
+
+Phase 15
+GitHub / Portfolio Presentation
+
+Phase 16
+TestFlight & App Store Readiness
+
+Temel geliştirme prensibi:
+
+Do not build every layer first and integrate everything at the end.
+
+Bunun yerine:
+
+Foundation
+↓
+one real vertical slice
+↓
+prove architecture
+↓
+expand features
+
+yaklaşımı kullanılacaktır.
+
+İlk gerçek vertical slice:
+
+Account CRUD
+
+olacaktır.
+
+Ardından:
+
+Transaction CRUD
+
+ile mimarinin ana technical story'si tamamlanacaktır.
+
+---
+
+# 2. Roadmap Philosophy
+
+Bu proje "önce 100 dosya açıp sonra içini doldurma" yaklaşımıyla geliştirilmeyecektir.
+
+Her phase sonunda çalışan, test edilebilir ve commit edilebilir bir sistem parçası bulunmalıdır.
+
+Her milestone şu dört soruya cevap vermelidir:
+
+1. Ne çalışıyor?
+2. Ne test edildi?
+3. Hangi architectural decision doğrulandı?
+4. GitHub reviewer bu phase'de ne görebilir?
+
+Her phase sonunda proje:
+
+build etmeli,
+mümkünse tests passing olmalı,
+yarım/refactor halinde bırakılmamalıdır.
+
+---
+
+# 3. Git Strategy
+
+Repository başlangıçtan itibaren Git ile tutulacaktır.
+
+Main branch:
+
+main
+
+Feature work:
+
+feature/project-foundation
+feature/networking
+feature/session-manager
+feature/accounts
+feature/transactions
+feature/dashboard
+feature/analytics
+
+gibi branch'ler kullanılabilir.
+
+Tek geliştirici olduğun için ağır Git Flow gerekli değildir.
+
+Önerilen model:
+
+short-lived feature branch
+↓
+small coherent commits
+↓
+merge to main
+
+---
+
+# 4. Commit Philosophy
+
+Commit:
+
+"çalıştığı noktayı"
+
+anlatmalıdır.
+
+Kötü:
+
+update
+fix
+changes
+final
+final-2
+done
+trying network
+
+İyi:
+
+chore: initialize PocketLedger project
+
+feat: add Money and CurrencyCode domain models
+
+feat: implement URLSession network client
+
+feat: persist Supabase session in Keychain
+
+feat: add account remote data source
+
+feat: cache accounts with SwiftData
+
+feat: implement account creation flow
+
+test: cover account balance calculations
+
+fix: preserve cached dashboard after refresh failure
+
+refactor: extract transaction validation into domain service
+
+---
+
+# 5. Pull Request Discipline
+
+Tek başına geliştiriyor olsan bile önemli feature'lar için GitHub PR açmak portfolio açısından değerlidir.
+
+Örneğin:
+
+PR #1
+Core networking layer
+
+PR #2
+Account management
+
+PR #3
+Transaction CRUD
+
+PR #4
+Analytics & Spending Insights
+
+PR description:
+
+What changed
+
+Why
+
+Architecture decisions
+
+How tested
+
+Screenshots if UI changed
+
+Known limitations
+
+Bu reviewer'a professional workflow sinyali verir.
+
+---
+
+# 6. Milestone Structure
+
+GitHub Milestones:
+
+M1 — Foundation
+
+M2 — Accounts
+
+M3 — Transaction CRUD
+
+M4 — Dashboard
+
+M5 — Analytics
+
+M6 — Quality & Testing
+
+M7 — Portfolio Release
+
+M8 — TestFlight
+
+Bu milestones GitHub Issues ile desteklenebilir.
+
+---
+
+# 7. Phase 0 — Project Foundation
+
+## Goal
+
+Projeyi production-oriented bir iOS project olarak başlatmak.
+
+Henüz feature geliştirilmez.
+
+Ama project structure, environment ve build discipline kurulur.
+
+---
+
+## Create Project
+
+Xcode:
+
+PocketLedger
+
+Targets:
+
+PocketLedger
+PocketLedgerTests
+PocketLedgerUITests
+
+Configuration:
+
+Debug
+Release
+
+Minimum:
+
+iOS 17+
+
+Swift:
+
+Swift 6 language mode
+
+---
+
+## Initial Directory Structure
+
+PocketLedger/
+├── App/
+├── Core/
+├── Domain/
+├── Data/
+├── Features/
+├── SharedUI/
+└── Resources/
+
+Tests/
+├── DomainTests/
+├── DataTests/
+├── PresentationTests/
+└── InfrastructureTests/
+
+---
+
+## Initial Files
+
+App/
+PocketLedgerApp.swift
+AppRootView.swift
+AppEnvironment.swift
+AppConfiguration.swift
+
+Core/
+Logging/
+AppLogger.swift
+
+Resources/
+Localizable.xcstrings
+
+Config/
+Debug.xcconfig
+Release.xcconfig
+
+---
+
+## AppEnvironment
+
+Create:
+
+enum AppEnvironment {
+    case development
+    case production
+    case demo
+    case uiTesting
+}
+
+Bu stage'de dependency graph henüz oluşturulmak zorunda değildir.
+
+Ama environment concept baştan bulunmalıdır.
+
+---
+
+## Configuration
+
+Config içerisinde:
+
+SUPABASE_URL
+SUPABASE_PUBLISHABLE_KEY
+
+load edilmeli.
+
+Hard-coded:
+
+let baseURL = "..."
+
+feature source files içerisinde bulunmamalıdır.
+
+---
+
+## Logging
+
+Create categorized Logger support:
+
+network
+persistence
+security
+session
+general
+analytics
+
+Sensitive data logging yasak.
+
+---
+
+## First Tests
+
+Basit:
+
+AppConfigurationTests
+
+örneğin missing configuration halinde expected error/state.
+
+Ama phase'i test yazmak için gereksiz büyütme.
+
+---
+
+## Acceptance Criteria
+
+✓ App builds
+
+✓ App launches
+
+✓ Debug/Release configuration exists
+
+✓ Environment abstraction exists
+
+✓ No secrets hard-coded in Swift source
+
+✓ Repository initialized
+
+✓ README skeleton exists
+
+✓ Test targets run
+
+---
+
+## Suggested Commits
+
+chore: initialize PocketLedger iOS project
+
+chore: add project folder structure
+
+chore: configure development and release environments
+
+feat: add application logging foundation
+
+---
+
+## Portfolio Checkpoint
+
+Henüz LinkedIn'de paylaşmaya gerek yok.
+
+GitHub repository private veya public olabilir ama README:
+
+"Work in progress"
+
+durumunda olabilir.
+
+---
+
+# 8. Phase 1 — Domain Foundation
+
+## Goal
+
+Infrastructure'dan bağımsız application language oluşturmak.
+
+Bu aşama PocketLedger'ın business vocabulary'sini tanımlar.
+
+---
+
+## Create Domain Models
+
+Domain/
+Models/
+
+CurrencyCode.swift
+Money.swift
+LocalDate.swift
+
+Account.swift
+AccountKind.swift
+AccountSummary.swift
+
+Transaction.swift
+TransactionKind.swift
+TransactionCategory.swift
+
+WalletProfile.swift
+
+MonthlySummary.swift
+CategorySpending.swift
+IncomeExpensePoint.swift
+AnalyticsSnapshot.swift
+
+SpendingInsight.swift
+
+---
+
+# 9. Implement Money First
+
+Money:
+
+struct Money {
+    let minorUnits: Int64
+    let currency: CurrencyCode
+}
+
+Operations:
+
+adding
+subtracting
+comparison
+
+Rule:
+
+Different currency values cannot silently add.
+
+Even though P0 uses one currency, type should protect semantic correctness.
+
+---
+
+## Tests
+
+MoneyTests
+
+Examples:
+
+100 + 200 = 300
+
+-200 + 100 = -100
+
+different currency addition fails/rejected
+
+format conversion preserves minor units
+
+large value behavior
+
+---
+
+# 10. Implement LocalDate
+
+Do not begin with Date.
+
+LocalDate:
+
+year
+month
+day
+
+Required:
+
+parse YYYY-MM-DD
+
+encode YYYY-MM-DD
+
+comparison
+
+today conversion using Calendar
+
+---
+
+## Tests
+
+"2026-09-14"
+→ LocalDate(2026,9,14)
+
+LocalDate
+→ same string
+
+invalid:
+
+2026-13-80
+
+should fail.
+
+---
+
+# 11. Transaction Domain Model
+
+Transaction:
+
+id
+kind
+sourceAccountID
+destinationAccountID?
+amount
+category?
+title
+note?
+date
+createdAt
+updatedAt
+
+TransactionKind:
+
+income
+expense
+transfer
+
+TransactionCategory:
+
+food
+transport
+shopping
+bills
+entertainment
+
+---
+
+# 12. Transaction Validation
+
+Create:
+
+Domain/
+Services/
+TransactionValidator.swift
+
+Rules:
+
+amount > 0
+
+title not empty
+
+source account required
+
+expense:
+category required
+destination nil
+
+income:
+category nil
+destination nil
+
+transfer:
+destination required
+category nil
+source != destination
+
+future transaction not allowed
+
+---
+
+## Validation Tests
+
+This phase should already include strong domain tests.
+
+Examples:
+
+expense without category fails
+
+income with category fails
+
+transfer to same account fails
+
+amount zero fails
+
+empty title fails
+
+valid expense succeeds
+
+valid income succeeds
+
+valid transfer succeeds
+
+---
+
+# 13. Account Balance Calculator
+
+Create:
+
+Domain/
+Services/
+AccountBalanceCalculator.swift
+
+Input:
+
+Account
+[Transaction]
+
+Output:
+
+Money
+
+Rules:
+
+opening balance
+
+income source:
++
+
+expense source:
+-
+
+transfer source:
+-
+
+transfer destination:
++
+
+---
+
+## Critical Tests
+
+Bank:
+
+Opening:
+10,000
+
+Income:
+5,000
+
+Expense:
+2,000
+
+Transfer out:
+1,000
+
+Transfer in:
+500
+
+Expected:
+12,500
+
+---
+
+## Credit Card Test
+
+Opening:
+
+-2,000
+
+Shopping:
+
+-500
+
+Transfer payment in:
+
++1,500
+
+Expected:
+
+-1,000
+
+---
+
+# 14. Domain Repository Protocols
+
+Create:
+
+Domain/
+Repositories/
+
+WalletProfileRepository.swift
+AccountRepository.swift
+TransactionRepository.swift
+
+Do not implement yet.
+
+Example:
+
+protocol AccountRepository: Sendable {
+
+    func cachedAccounts() async throws -> [Account]
+
+    func refreshAccounts() async throws -> [Account]
+
+    func createAccount(
+        _ input: CreateAccountInput
+    ) async throws -> Account
+
+    ...
+}
+
+Exact method names can evolve.
+
+---
+
+## Acceptance Criteria
+
+✓ Domain imports no SwiftUI
+
+✓ Domain imports no SwiftData
+
+✓ Domain imports no Supabase
+
+✓ Money is exact
+
+✓ Transaction validation works
+
+✓ Account balances calculated correctly
+
+✓ Repository boundaries exist
+
+✓ Domain tests passing
+
+---
+
+## Suggested Commits
+
+feat: add core finance domain models
+
+feat: add Money minor-unit representation
+
+feat: add transaction validation rules
+
+feat: implement account balance calculator
+
+test: cover financial domain invariants
+
+---
+
+## Portfolio Checkpoint
+
+Architecture now exists in code.
+
+Still not worth major LinkedIn post.
+
+---
+
+# 15. Phase 2 — Networking Foundation
+
+## Goal
+
+Supabase-independent reusable HTTP foundation oluşturmak.
+
+No Accounts yet.
+
+No Transactions yet.
+
+First prove URLSession layer.
+
+---
+
+# 16. Create Files
+
+Core/
+Network/
+
+HTTPMethod.swift
+APIService.swift
+APIRequest.swift
+NetworkClient.swift
+
+URLSessionNetworkClient.swift
+
+RequestBuilder.swift
+
+NetworkError.swift
+
+PostgRESTErrorDTO.swift
+
+APIJSONDecoder.swift
+APIJSONEncoder.swift
+
+---
+
+# 17. HTTPMethod
+
+GET
+POST
+PATCH
+DELETE
+
+No generic framework beyond needs.
+
+---
+
+# 18. APIRequest
+
+Request defines:
+
+service
+path
+method
+query items
+headers
+body
+authentication requirement
+
+Do not add:
+
+retry policy
+cache policy
+interceptors
+plugins
+middleware chains
+
+unless needed.
+
+---
+
+# 19. RequestBuilder
+
+Responsibility:
+
+configuration
++
+APIRequest
+=
+URLRequest
+
+Test separately.
+
+---
+
+# 20. NetworkClient
+
+Flow:
+
+APIRequest
+↓
+RequestBuilder
+↓
+URLSession
+↓
+HTTPURLResponse
+↓
+status validation
+↓
+decode
+
+No domain knowledge.
+
+---
+
+# 21. MockURLProtocol
+
+Create test support immediately.
+
+Tests must not use real Internet.
+
+InfrastructureTests/
+Network/
+
+MockURLProtocol.swift
+
+NetworkClientTests.swift
+
+RequestBuilderTests.swift
+
+---
+
+# 22. Network Tests
+
+Test:
+
+GET URL
+
+query parameters
+
+POST JSON body
+
+headers
+
+200 decode
+
+201 decode
+
+400 error
+
+401 error
+
+403 error
+
+409 error
+
+429 error
+
+500 error
+
+invalid JSON
+
+timeout
+
+offline
+
+cancelled request
+
+---
+
+## Acceptance Criteria
+
+✓ URLSession layer works
+
+✓ Codable response can decode
+
+✓ HTTP errors typed
+
+✓ PostgREST errors parsed
+
+✓ Query items use URLComponents
+
+✓ Unit tests do not require Internet
+
+✓ No Supabase-specific transaction/account logic in NetworkClient
+
+---
+
+## Suggested Commits
+
+feat: add typed HTTP request model
+
+feat: implement URLSession network client
+
+feat: decode PostgREST API errors
+
+test: add deterministic network client tests
+
+---
+
+## Portfolio Checkpoint
+
+At this point GitHub already shows:
+
+URLSession
+async/await
+Codable
+typed errors
+tests
+
+Good technical base.
+
+---
+
+# 23. Phase 3 — Remote Authentication & Session
+
+## Goal
+
+Real backend ile ilk production-like communication kurmak.
+
+Bu phase sonunda:
+
+App
+↓
+anonymous Supabase auth
+↓
+session
+↓
+Keychain
+↓
+token refresh
+
+çalışmalıdır.
+
+---
+
+# 24. Create Files
+
+Core/
+Security/
+
+SecureStore.swift
+KeychainSecureStore.swift
+
+UserSession.swift
+SessionManager.swift
+
+Data/
+Remote/
+Auth/
+
+AuthSessionDTO.swift
+AuthUserDTO.swift
+
+AuthRemoteDataSource.swift
+DefaultAuthRemoteDataSource.swift
+
+---
+
+# 25. Implement Keychain First
+
+SecureStore protocol.
+
+Then KeychainSecureStore.
+
+Operations:
+
+save
+load
+delete
+
+Do not over-generalize.
+
+---
+
+## Keychain Tests
+
+Keychain integration testing may be limited.
+
+At minimum:
+
+SessionManager should use FakeSecureStore in unit tests.
+
+---
+
+# 26. Auth Remote DataSource
+
+Implement:
+
+anonymousSignUp()
+
+refreshSession(refreshToken:)
+
+using raw URLSession NetworkClient.
+
+First real endpoint hit occurs here.
+
+---
+
+# 27. SessionManager Actor
+
+Implement as:
+
+actor SessionManager
+
+Responsibilities:
+
+load stored session
+
+create session when absent
+
+return validAccessToken()
+
+refresh if nearing expiration
+
+persist new session
+
+prevent concurrent refresh storms
+
+expose userID safely
+
+---
+
+# 28. SessionManager Tests
+
+Test heavily.
+
+No stored session:
+→ signup
+
+valid stored session:
+→ return access token
+
+expired:
+→ refresh
+
+refresh success:
+→ stores new session
+
+refresh failure:
+→ invalidates session
+
+5 simultaneous validAccessToken():
+→ one refresh request
+
+---
+
+# 29. Manual Backend Verification
+
+Development backend üzerinde:
+
+launch
+
+anonymous user created
+
+Supabase Auth dashboard user appears
+
+restart app
+
+same user reused
+
+simulate expiry
+
+refresh works
+
+---
+
+## Acceptance Criteria
+
+✓ Anonymous session creation works
+
+✓ Session stored in Keychain
+
+✓ App restart reuses session
+
+✓ Access token attached to requests
+
+✓ Expired session refreshes
+
+✓ Concurrent refresh serialized
+
+✓ Secret/service-role key absent
+
+✓ Unit tests cover session behavior
+
+---
+
+## Suggested Commits
+
+feat: add Keychain-backed secure storage
+
+feat: implement anonymous Supabase authentication
+
+feat: add actor-isolated session manager
+
+test: cover token refresh and concurrent session access
+
+---
+
+## Portfolio Checkpoint
+
+Possible small development post:
+
+"Implemented raw URLSession-based Supabase authentication without SDK, including Keychain persistence and actor-isolated token refresh."
+
+Do not publish polished project yet.
+
+---
+
+# 30. Phase 4 — SwiftData Persistence
+
+## Goal
+
+Create local cache independently of repositories.
+
+---
+
+# 31. Create Files
+
+Core/
+Persistence/
+
+PersistenceContainer.swift
+PersistenceError.swift
+PersistenceActor.swift
+
+Data/
+Local/
+Models/
+
+WalletProfileRecord.swift
+AccountRecord.swift
+TransactionRecord.swift
+CacheMetadataRecord.swift
+
+Data/
+Local/
+Stores/
+
+WalletProfileLocalStore.swift
+AccountLocalStore.swift
+TransactionLocalStore.swift
+
+---
+
+# 32. PersistenceContainer
+
+Support:
+
+production disk-backed store
+
+test in-memory store
+
+preview/demo store if needed
+
+---
+
+# 33. Local Store APIs
+
+AccountLocalStore:
+
+fetch
+upsert
+upsertMany
+delete
+replace/reconcile
+
+TransactionLocalStore:
+
+fetch
+upsert
+upsertMany
+delete
+reconcile authoritative response
+
+---
+
+# 34. User Scope
+
+All local fetch operations require:
+
+userID
+
+Never:
+
+fetch all transactions
+
+without user context.
+
+---
+
+# 35. Persistence Tests
+
+Use in-memory ModelContainer.
+
+Test:
+
+account insert
+
+account update
+
+account delete
+
+transaction insert
+
+transaction edit
+
+transaction delete
+
+user A does not receive user B records
+
+sort by transaction date
+
+reconcile removes stale rows
+
+failed operation does not corrupt store
+
+---
+
+## Acceptance Criteria
+
+✓ SwiftData models hidden from Domain
+
+✓ Persistence actor isolation used
+
+✓ Same remote UUIDs stored locally
+
+✓ Local data user-scoped
+
+✓ In-memory tests work
+
+✓ Local stores return/mappable values
+
+---
+
+## Suggested Commits
+
+feat: add SwiftData persistence container
+
+feat: add account and transaction cache models
+
+feat: implement user-scoped local stores
+
+test: cover SwiftData cache reconciliation
+
+---
+
+# 36. Phase 5 — Repositories & Vertical Data Flow
+
+## Goal
+
+Remote + Local architecture'ı gerçekten bağlamak.
+
+This is a critical milestone.
+
+---
+
+# 37. Create DTOs
+
+Data/
+Remote/
+Profile/
+
+WalletProfileDTO.swift
+WalletProfileRemoteDataSource.swift
+
+Accounts/
+
+AccountDTO.swift
+CreateAccountRequestDTO.swift
+UpdateAccountRequestDTO.swift
+AccountRemoteDataSource.swift
+
+Transactions/
+
+TransactionDTO.swift
+CreateTransactionRequestDTO.swift
+UpdateTransactionRequestDTO.swift
+TransactionRemoteDataSource.swift
+
+---
+
+# 38. Create Mappers
+
+Data/
+Mappers/
+
+WalletProfileMapper.swift
+AccountMapper.swift
+TransactionMapper.swift
+
+Tests:
+
+valid DTO → domain
+
+invalid kind → mapping failure
+
+invalid category → mapping failure
+
+invalid local date → mapping failure
+
+---
+
+# 39. Implement Repositories
+
+Data/
+Repositories/
+
+DefaultWalletProfileRepository.swift
+DefaultAccountRepository.swift
+DefaultTransactionRepository.swift
+
+---
+
+# 40. Repository Read Strategy
+
+cachedAccounts()
+
+returns local.
+
+refreshAccounts():
+
+remote
+↓
+map
+↓
+reconcile local
+↓
+return domain
+
+Same for transactions.
+
+---
+
+# 41. Repository Write Strategy
+
+create:
+
+remote
+↓
+canonical DTO
+↓
+local upsert
+↓
+domain result
+
+update:
+
+remote
+↓
+local update
+
+delete:
+
+remote
+↓
+local delete
+
+---
+
+# 42. Repository Edge Tests
+
+Very important.
+
+cache exists + remote success
+
+cache exists + remote failure
+
+no cache + remote failure
+
+remote mutation fails
+
+remote create succeeds + local save succeeds
+
+remote create succeeds + local save fails
+
+delete remote fails:
+local remains
+
+update remote succeeds:
+cache updated
+
+duplicate create conflict:
+reconcile by stable UUID
+
+---
+
+## Acceptance Criteria
+
+✓ One complete remote/local data flow works
+
+✓ SwiftData cache updated from server canonical data
+
+✓ Remote failures preserve existing cache
+
+✓ DTOs never leak to presentation
+
+✓ Repository test suite covers edge cases
+
+---
+
+## Suggested Commits
+
+feat: add account REST data source
+
+feat: add transaction REST data source
+
+feat: map remote and persistence models to domain
+
+feat: implement remote-authoritative repositories
+
+test: cover repository cache and failure behavior
+
+---
+
+# 43. Milestone M1 — Foundation Complete
+
+At this point:
+
+SwiftUI shell
+Domain
+URLSession
+Supabase auth
+Keychain
+SwiftData
+Repositories
+Tests
+
+exist.
+
+Do not proceed if architecture currently feels broken.
+
+This is the correct time for refactor.
+
+After this point, features will reuse this foundation.
+
+---
+
+# 44. Phase 6 — Face ID / App Lock
+
+## Goal
+
+Local security boundary implement etmek.
+
+This is independent of remote auth.
+
+---
+
+# 45. Create Files
+
+Core/
+Security/
+
+LocalAuthenticationService.swift
+DefaultLocalAuthenticationService.swift
+
+AppLockController.swift
+SecurityPolicy.swift
+
+Features/
+Authentication/
+Presentation/
+
+LockView.swift
+AuthenticationViewModel.swift
+
+---
+
+# 46. LocalAuthenticationService
+
+Protocol:
+
+canAuthenticate
+
+authenticate(reason:)
+
+Concrete:
+
+LAContext
+
+Default policy:
+
+deviceOwnerAuthentication
+
+---
+
+# 47. App Lock State
+
+Possible state:
+
+locked
+authenticating
+unlocked
+failed
+
+AppRoot chooses:
+
+LockView
+
+or
+
+MainTabView
+
+---
+
+# 48. Privacy Shield
+
+scenePhase observation.
+
+When inactive/background:
+
+financial content covered.
+
+Reauthentication threshold supported.
+
+---
+
+# 49. Authentication Tests
+
+MockLocalAuthenticationService.
+
+Test:
+
+success unlocks
+
+failure remains locked
+
+cancel stays locked
+
+unavailable handled
+
+background timeout relocks
+
+short background does not unnecessarily destroy app state
+
+---
+
+## Acceptance Criteria
+
+✓ Face ID/passcode works on device
+
+✓ Financial data hidden before unlock
+
+✓ App switcher does not expose financial UI
+
+✓ Authentication independent of Supabase JWT
+
+✓ Failure does not crash app
+
+✓ Test double exists
+
+---
+
+## Suggested Commits
+
+feat: add LocalAuthentication app lock
+
+feat: protect financial content in app switcher
+
+test: cover application lock state transitions
+
+---
+
+## Portfolio Checkpoint
+
+First meaningful LinkedIn preview possible.
+
+Show:
+
+Face ID
+Dashboard placeholder/sample
+architecture snippet
+
+But better wait until transaction CRUD exists for main showcase.
+
+---
+
+# 50. Phase 7 — Account Management
+
+## Goal
+
+First full user-facing vertical slice.
+
+This validates architecture end-to-end.
+
+---
+
+# 51. Create Domain Use Cases
+
+Domain/
+UseCases/
+Accounts/
+
+LoadAccountsUseCase.swift
+CreateAccountUseCase.swift
+UpdateAccountUseCase.swift
+ArchiveAccountUseCase.swift
+DeleteAccountUseCase.swift
+
+---
+
+# 52. Presentation Files
+
+Features/
+Accounts/
+Presentation/
+
+AccountListView.swift
+AccountListViewModel.swift
+
+AccountDetailView.swift
+AccountDetailViewModel.swift
+
+AccountFormView.swift
+AccountFormViewModel.swift
+
+AccountRow.swift
+AccountCard.swift
+
+---
+
+# 53. Account Form
+
+Fields:
+
+name
+
+kind:
+bank
+cash
+credit card
+
+opening balance
+
+Base currency shown, not selectable per account.
+
+---
+
+# 54. Credit Card UX
+
+For credit card:
+
+Field label:
+
+Current amount owed
+
+User:
+
+2000
+
+Domain:
+
+-200000 minor units
+
+UI should not force user to type negative sign.
+
+---
+
+# 55. Account States
+
+Account list must support:
+
+loading without cache
+
+cached content + refreshing
+
+content
+
+empty
+
+blocking error
+
+non-blocking refresh warning
+
+---
+
+# 56. Archive Flow
+
+Account with history:
+
+Delete
+↓
+backend conflict / known check
+↓
+suggest Archive
+
+Better UX:
+
+if history already known:
+show Archive option.
+
+Archived accounts:
+
+excluded from active dashboard
+still visible in history if needed.
+
+---
+
+# 57. Tests
+
+CreateAccountUseCaseTests
+
+AccountListViewModelTests
+
+AccountFormViewModelTests
+
+archive tests
+
+delete restriction tests
+
+---
+
+## Acceptance Criteria
+
+✓ Account list works
+
+✓ Create works against real API
+
+✓ Edit works
+
+✓ Archive works
+
+✓ Empty account hard-delete works
+
+✓ Account with history cannot hard-delete
+
+✓ SwiftData cache survives restart
+
+✓ Offline cached accounts remain visible
+
+✓ Credit-card opening balance semantics correct
+
+---
+
+## Suggested Commits
+
+feat: add account creation use case
+
+feat: build account list and account form
+
+feat: support account editing and archival
+
+test: cover account presentation states
+
+---
+
+# 58. Milestone M2 — Accounts Complete
+
+Now application can:
+
+authenticate locally
+authenticate remotely
+create financial accounts
+persist and cache them
+
+This is first complete portfolio vertical slice.
+
+---
+
+# 59. Phase 8 — Transaction CRUD
+
+## Goal
+
+Build core feature of PocketLedger.
+
+This should receive the most engineering attention.
+
+---
+
+# 60. Domain Use Cases
+
+Create:
+
+LoadTransactionsUseCase.swift
+
+CreateTransactionUseCase.swift
+
+UpdateTransactionUseCase.swift
+
+DeleteTransactionUseCase.swift
+
+GetTransactionUseCase.swift
+
+---
+
+# 61. Presentation
+
+Features/
+Transactions/
+Presentation/
+
+TransactionListView.swift
+TransactionListViewModel.swift
+
+TransactionRow.swift
+
+TransactionDetailView.swift
+TransactionDetailViewModel.swift
+
+TransactionFormView.swift
+TransactionFormViewModel.swift
+
+TransactionFilterView.swift
+
+---
+
+# 62. Transaction Form Modes
+
+enum TransactionFormMode {
+    case create
+    case edit(Transaction.ID)
+}
+
+Avoid duplicated create/edit screens.
+
+---
+
+# 63. Expense Flow
+
+Select:
+
+Expense
+
+Fields:
+
+amount
+account
+category
+title
+date
+note
+
+Validation.
+
+Save state:
+
+idle
+saving
+failed
+
+Disable duplicate submission while saving.
+
+---
+
+# 64. Income Flow
+
+No category.
+
+destination account nil.
+
+Form dynamically hides irrelevant fields.
+
+---
+
+# 65. Transfer Flow
+
+Source account
+
+destination account
+
+amount
+
+title
+
+date
+
+optional note
+
+No category.
+
+source != destination.
+
+---
+
+# 66. Transaction List
+
+Default:
+
+newest first
+
+Local:
+
+search title
+
+filter transaction type
+
+filter category
+
+Potential:
+
+filter account later.
+
+---
+
+# 67. Delete Flow
+
+Detail
+↓
+Delete
+↓
+confirmation
+↓
+remote DELETE
+↓
+local delete
+↓
+dismiss
+
+Failure:
+
+remain on screen
+show error.
+
+---
+
+# 68. Edit Flow
+
+Load existing transaction
+
+Populate form
+
+Edit
+
+PATCH
+
+Server response
+
+Cache update
+
+UI update
+
+---
+
+# 69. Critical Transaction Tests
+
+Create expense
+
+Create income
+
+Create transfer
+
+Invalid expense
+
+Invalid transfer
+
+Edit amount
+
+Move transaction to another account
+
+Change expense category
+
+Delete transaction
+
+Double save prevented
+
+Network fail preserves form state
+
+Duplicate UUID recovery
+
+---
+
+# 70. Balance Integration Tests
+
+After each transaction mutation:
+
+balance calculation should reflect changed transaction set.
+
+Important scenarios:
+
+income
+
+expense
+
+transfer
+
+edit
+
+delete
+
+credit-card payment
+
+---
+
+## Acceptance Criteria
+
+✓ Full CRUD works
+
+✓ Expenses categorized
+
+✓ Income works
+
+✓ Internal transfer works
+
+✓ Search works
+
+✓ Filters work
+
+✓ Transaction cache survives restart
+
+✓ Offline list works
+
+✓ Offline create fails gracefully without fake success
+
+✓ Edit/delete affect derived balances
+
+✓ Core transaction tests passing
+
+---
+
+## Suggested Commits
+
+feat: add transaction creation flow
+
+feat: support income and expense transactions
+
+feat: add internal account transfers
+
+feat: implement transaction editing
+
+feat: implement transaction deletion
+
+feat: add local transaction search and filters
+
+test: cover transaction CRUD edge cases
+
+---
+
+# 71. Milestone M3 — Core Product Complete
+
+This is the first strong portfolio checkpoint.
+
+Application now demonstrates:
+
+SwiftUI
+MVVM
+Clean boundaries
+URLSession
+REST
+Codable
+SwiftData
+Keychain
+Face ID
+async/await
+CRUD
+DI
+error handling
+testing
+
+At this point LinkedIn development post makes sense.
+
+---
+
+# 72. LinkedIn Development Post Idea
+
+Show:
+
+15–30 second recording
+
+Face ID
+Dashboard/account navigation
+Add expense
+Transaction list
+Edit/delete
+
+Focus text:
+
+Built a Personal Finance iOS app as a production-oriented portfolio project.
+
+Highlights:
+
+SwiftUI
+Swift Concurrency
+raw URLSession REST integration
+SwiftData cache
+Keychain session storage
+Face ID
+MVVM/Clean Architecture
+tested transaction business rules
+
+Do not present it as finished yet.
+
+---
+
+# 73. Phase 9 — Dashboard
+
+## Goal
+
+Create high-value product summary.
+
+Do not directly query network from Dashboard.
+
+---
+
+# 74. Create
+
+Domain/
+UseCases/
+Dashboard/
+
+LoadDashboardUseCase.swift
+
+Domain/
+Models/
+
+DashboardSnapshot.swift
+
+Features/
+Dashboard/
+Presentation/
+
+DashboardView.swift
+DashboardViewModel.swift
+
+Components/
+
+BalanceHeader.swift
+AccountCarousel.swift
+MonthlySummaryCard.swift
+RecentTransactionsSection.swift
+
+---
+
+# 75. DashboardSnapshot
+
+Should contain:
+
+total balance
+
+active AccountSummary array
+
+monthly income
+
+monthly expense
+
+monthly change comparison
+
+recent transactions
+
+Do not expose raw database models.
+
+---
+
+# 76. Load Strategy
+
+Dashboard:
+
+cached repositories
+↓
+immediate snapshot
+↓
+remote refresh accounts + transactions
+↓
+new snapshot
+
+Could use async let when repository refreshes can run independently.
+
+Example concept:
+
+async let accounts = ...
+async let transactions = ...
+
+Then compose snapshot.
+
+---
+
+# 77. Dashboard States
+
+Cold launch/no cache:
+loading
+
+cache:
+content immediately
+
+refresh:
+subtle progress
+
+refresh failure:
+content + offline warning
+
+no account:
+empty onboarding CTA
+
+---
+
+# 78. Dashboard Tests
+
+total balance
+
+archived accounts excluded
+
+recent transactions ordering
+
+monthly income ignores transfers
+
+monthly expense ignores transfers
+
+credit-card debt influences total balance
+
+refresh failure preserves content
+
+---
+
+## Acceptance Criteria
+
+✓ Total balance accurate
+
+✓ Account cards accurate
+
+✓ Recent transactions work
+
+✓ Monthly totals accurate
+
+✓ Transfers excluded from income/expense
+
+✓ Archived account excluded from total
+
+✓ Cached dashboard works offline
+
+---
+
+## Suggested Commits
+
+feat: add dashboard aggregation use case
+
+feat: build financial overview dashboard
+
+test: cover dashboard balance and summary calculations
+
+---
+
+# 79. Phase 10 — Analytics
+
+## Goal
+
+Turn transaction data into useful visualization.
+
+Charts must represent Domain calculations, not calculate business rules themselves.
+
+---
+
+# 80. Create
+
+Domain/
+Services/
+
+AnalyticsCalculator.swift
+
+Domain/
+UseCases/
+Analytics/
+
+LoadAnalyticsUseCase.swift
+
+Features/
+Analytics/
+Presentation/
+
+AnalyticsView.swift
+AnalyticsViewModel.swift
+
+MonthlySpendingChart.swift
+CategoryDistributionChart.swift
+IncomeExpenseChart.swift
+ChartSummaryView.swift
+
+---
+
+# 81. AnalyticsCalculator
+
+Input:
+
+[Transaction]
+date range
+currency
+
+Output:
+
+AnalyticsSnapshot
+
+---
+
+# 82. Monthly Spending
+
+Group expense transactions by month.
+
+Transfers excluded.
+
+Income excluded.
+
+Output:
+
+month
+expense Money
+
+---
+
+# 83. Category Distribution
+
+Expense only.
+
+Group by category.
+
+Output:
+
+category
+amount
+percentage
+
+Handle:
+
+total expense = 0
+
+without division by zero.
+
+---
+
+# 84. Income vs Expense
+
+Group monthly:
+
+income
+expense
+
+Transfer excluded from both.
+
+---
+
+# 85. Charts
+
+Swift Charts:
+
+Monthly Spending:
+BarMark
+
+Income vs Expense:
+LineMark
+
+Category:
+SectorMark if deployment APIs fit, otherwise suitable native representation.
+
+Every chart also gets textual summary.
+
+---
+
+# 86. Analytics Tests
+
+single month
+
+multiple months
+
+only income
+
+only expense
+
+no transactions
+
+transfers only
+
+zero expense
+
+category calculations
+
+month boundary
+
+year boundary
+
+transaction edits affect analytics
+
+---
+
+## Acceptance Criteria
+
+✓ Monthly chart accurate
+
+✓ Category chart accurate
+
+✓ Income/expense trend accurate
+
+✓ Empty analytics state works
+
+✓ Transfer excluded
+
+✓ Chart values independently unit-tested
+
+✓ Accessibility values exist
+
+---
+
+## Suggested Commits
+
+feat: add analytics calculation engine
+
+feat: visualize monthly spending with Swift Charts
+
+feat: add category spending distribution
+
+feat: add income versus expense trend
+
+test: cover analytics edge cases
+
+---
+
+# 87. Phase 11 — Spending Insights
+
+## Goal
+
+Create PocketLedger's signature feature.
+
+This should be one of the most polished domain components.
+
+---
+
+# 88. Create
+
+Domain/
+Services/
+
+SpendingInsightEngine.swift
+
+Potential helpers:
+
+SpendingPeriod.swift
+InsightRule.swift
+
+But do not overengineer initially.
+
+---
+
+# 89. Initial Insight Rules
+
+Rule 1:
+
+Month-over-month category increase
+
+Example:
+
+Food spending is up 18% this month.
+
+---
+
+Rule 2:
+
+Top category
+
+Shopping is your biggest spending category this month.
+
+32% of monthly spending.
+
+---
+
+Rule 3:
+
+Overall decrease
+
+You spent 14% less than last month.
+
+---
+
+Rule 4:
+
+Highest spending month
+
+This is your highest spending month in the last 3 months.
+
+---
+
+# 90. Threshold Rules
+
+Avoid silly insights.
+
+Example:
+
+previous:
+₺5
+
+current:
+₺10
+
++100%
+
+Technically true but not useful.
+
+Add:
+
+minimum absolute amount threshold
+
+minimum percentage threshold
+
+minimum transaction/sample requirements
+
+Exact thresholds should be constants/configuration in Domain.
+
+---
+
+# 91. No Division by Zero
+
+previous spending = 0
+
+current = 1000
+
+Do not show:
+
++∞%
+
+Instead:
+
+potential insight:
+
+"You started spending in Food this month."
+
+or simply no percentage insight in P0.
+
+Prefer safe/no insight.
+
+---
+
+# 92. Insight Prioritization
+
+Do not show 12 cards.
+
+Potential max:
+
+3 insights
+
+Priority:
+
+meaningful warning
+
+positive improvement
+
+largest category
+
+historical context
+
+Avoid duplicate semantic messages.
+
+---
+
+# 93. Insight Tests
+
+Test heavily using parameterized Swift Testing.
+
+Previous:
+100
+Current:
+120
+
+Expected:
++20%
+
+Previous:
+100
+Current:
+80
+
+Expected:
+-20%
+
+Previous:
+0
+Current:
+100
+
+Expected:
+no invalid percentage
+
+Small amounts:
+no insight
+
+Top category tie:
+deterministic behavior
+
+Insufficient history:
+educational empty state
+
+Transfer-heavy dataset:
+transfers ignored
+
+---
+
+## Acceptance Criteria
+
+✓ Insights deterministic
+
+✓ No API/AI dependency
+
+✓ No misleading division-by-zero values
+
+✓ Threshold rules prevent noise
+
+✓ Max insight count enforced
+
+✓ Strong unit-test coverage
+
+---
+
+## Suggested Commits
+
+feat: add rule-based spending insight engine
+
+feat: surface contextual spending insights in analytics
+
+test: add parameterized insight rule coverage
+
+---
+
+# 94. Milestone M4/M5 — Product Differentiation Complete
+
+At this point PocketLedger is no longer:
+
+"bank UI clone"
+
+It has:
+
+real domain logic
+real analytics
+real financial rules
+real caching
+real errors
+real testing
+
+This is the strongest point for first polished LinkedIn showcase.
+
+---
+
+# 95. Phase 12 — Offline, Errors & Recovery UX
+
+## Goal
+
+Make failure states deliberate.
+
+This phase separates demo quality from product quality.
+
+---
+
+# 96. Shared Components
+
+SharedUI/
+Components/
+
+LoadingView.swift
+EmptyStateView.swift
+ErrorStateView.swift
+OfflineBanner.swift
+RetryView.swift
+InlineErrorView.swift
+
+---
+
+# 97. Error Mapping
+
+Create if not already:
+
+PresentationErrorMapper
+
+RepositoryError.offline
+
+→ user-facing context-aware copy
+
+RepositoryError.serviceUnavailable
+
+→ appropriate fallback
+
+ValidationError
+
+→ field-level message
+
+---
+
+# 98. Test Failure Scenarios Manually
+
+Use Network Link Conditioner or mock environment.
+
+Test:
+
+launch offline with cache
+
+launch offline without cache
+
+dashboard refresh failure
+
+account create failure
+
+transaction create failure
+
+delete failure
+
+token refresh failure
+
+invalid server JSON
+
+500 server response
+
+429 rate limit
+
+---
+
+# 99. Expected Behaviors
+
+Cache + read failure:
+
+content remains
+
+No cache + read failure:
+
+error + Retry
+
+Mutation failure:
+
+do not fake success
+
+Form:
+
+data remains
+
+Delete failure:
+
+item remains
+
+Cancellation:
+
+no fake error.
+
+---
+
+## Acceptance Criteria
+
+✓ Every major screen has loading state
+
+✓ Every major screen has empty state
+
+✓ Read failures are recoverable
+
+✓ Cached content remains on refresh failure
+
+✓ Form input survives network failure
+
+✓ Raw technical errors hidden
+
+✓ Retry paths work
+
+---
+
+## Suggested Commits
+
+feat: add shared loading and empty states
+
+feat: preserve cached content during remote failures
+
+feat: add user-facing error and retry handling
+
+test: cover offline and recovery presentation states
+
+---
+
+# 100. Phase 13 — Testing Hardening
+
+## Goal
+
+Move from "has tests" to "architecture is proven by tests."
+
+Do not chase arbitrary 100% coverage.
+
+Test critical behavior.
+
+---
+
+# 101. Domain Test Coverage
+
+High priority:
+
+Money
+
+LocalDate
+
+TransactionValidator
+
+AccountBalanceCalculator
+
+AnalyticsCalculator
+
+SpendingInsightEngine
+
+---
+
+# 102. Repository Coverage
+
+High priority:
+
+remote + local success
+
+remote failure
+
+cache fallback
+
+local failure after remote success
+
+duplicate create reconciliation
+
+user cache isolation
+
+---
+
+# 103. ViewModel Coverage
+
+Dashboard
+
+Transactions
+
+Account form
+
+Transaction form
+
+Analytics
+
+Authentication
+
+Focus:
+
+state transitions
+
+not SwiftUI rendering details.
+
+---
+
+# 104. Integration Tests
+
+Optional development backend suite:
+
+auth works
+
+RLS user isolation
+
+valid account insert
+
+invalid transaction rejected
+
+account FK restriction
+
+transfer ownership restriction
+
+Do not make normal CI depend on unreliable external backend.
+
+---
+
+# 105. UI Tests
+
+XCUITest:
+
+Launch in UI test environment
+
+Dashboard appears
+
+Open Transactions
+
+Create expense
+
+Verify row
+
+Edit expense
+
+Verify update
+
+Delete
+
+Verify missing
+
+Second flow:
+
+Create transfer
+
+Verify balances update
+
+---
+
+# 106. Test Naming
+
+Prefer behavior.
+
+Example:
+
+@Test
+func expenseRequiresCategory()
+
+@Test
+func transferDoesNotChangeTotalNetBalance()
+
+@Test
+func refreshFailureKeepsCachedTransactions()
+
+@Test
+func accountWithTransactionsCannotBeDeleted()
+
+---
+
+## Acceptance Criteria
+
+✓ Critical domain rules tested
+
+✓ Repository edge cases tested
+
+✓ ViewModel state tested
+
+✓ Core UI flow automated
+
+✓ Tests deterministic
+
+✓ No normal unit test requires real Internet
+
+---
+
+## Suggested Commits
+
+test: expand domain financial rule coverage
+
+test: cover repository synchronization failures
+
+test: add transaction CRUD UI smoke test
+
+---
+
+# 107. Phase 14 — Accessibility, Dark Mode & UX Polish
+
+## Goal
+
+Turn functionality into credible iOS product.
+
+---
+
+# 108. Dark Mode Audit
+
+Review:
+
+Dashboard
+
+Account cards
+
+Transaction rows
+
+Forms
+
+Charts
+
+Errors
+
+Insights
+
+Lock screen
+
+Do not use:
+
+.white
+.black
+
+unless intentionally semantic.
+
+---
+
+# 109. Dynamic Type
+
+Test:
+
+Default
+
+XXL
+
+Accessibility sizes
+
+Check:
+
+amount truncation
+
+buttons
+
+cards
+
+chart labels
+
+navigation titles
+
+forms
+
+---
+
+# 110. VoiceOver
+
+Critical elements:
+
+Total balance
+
+Account card
+
+Transaction row
+
+Chart values
+
+Insight card
+
+Delete buttons
+
+Form fields
+
+---
+
+# 111. Transaction Row Accessibility
+
+Visual:
+
+🍴 Lunch
+Food
+₺420
+
+VoiceOver:
+
+"Expense. Lunch. Food. 420 Turkish lira. September 14."
+
+One coherent element may be better than reading every nested label separately.
+
+---
+
+# 112. Chart Accessibility
+
+Never only color.
+
+Provide:
+
+category
+
+value
+
+percentage
+
+Text summary below chart.
+
+Example:
+
+Food
+₺2,850
+28 percent
+
+---
+
+# 113. Haptics
+
+Use sparingly:
+
+successful create
+
+successful delete maybe
+
+Do not haptic every interaction.
+
+P1 polish only.
+
+---
+
+# 114. Animation
+
+Use native subtle animation.
+
+Avoid portfolio-app syndrome:
+
+every card spinning/sliding/scaling.
+
+Financial app should feel calm and trustworthy.
+
+---
+
+## Acceptance Criteria
+
+✓ Dark Mode complete
+
+✓ Dynamic Type major flows usable
+
+✓ VoiceOver major flows understandable
+
+✓ Charts accessible
+
+✓ Touch targets acceptable
+
+✓ No information encoded only by color
+
+---
+
+## Suggested Commits
+
+feat: complete dark mode support
+
+feat: improve VoiceOver semantics across finance flows
+
+feat: support large Dynamic Type layouts
+
+---
+
+# 115. Milestone M6 — Quality Complete
+
+Application now meets:
+
+functional
+technical
+testing
+accessibility
+
+portfolio expectations.
+
+Only presentation/distribution remains.
+
+---
+
+# 116. Phase 15 — GitHub Portfolio Presentation
+
+## Goal
+
+Reviewer should understand application in 2–5 minutes.
+
+README is a product artifact.
+
+---
+
+# 117. README Structure
+
+# PocketLedger
+
+Short positioning:
+
+A production-oriented personal finance iOS application built with SwiftUI to demonstrate modern iOS architecture, networking, persistence, security and testing.
+
+---
+
+## Screenshots
+
+Include:
+
+Lock / Face ID
+
+Dashboard
+
+Transactions
+
+Add Transaction
+
+Analytics
+
+Dark Mode
+
+---
+
+## Demo
+
+GIF/video:
+
+Launch
+↓
+Face ID
+↓
+Dashboard
+↓
+Add expense
+↓
+Analytics update
+
+Keep short.
+
+---
+
+## Key Features
+
+Account management
+
+Income / Expense / Transfer
+
+Transaction CRUD
+
+Analytics
+
+Spending Insights
+
+Offline cached reads
+
+Face ID app lock
+
+---
+
+## Tech Stack
+
+Swift 6
+
+SwiftUI
+
+Observation
+
+Swift Concurrency
+
+URLSession
+
+Codable
+
+SwiftData
+
+Keychain
+
+LocalAuthentication
+
+Swift Charts
+
+Swift Testing
+
+XCUITest
+
+Supabase REST
+
+PostgreSQL
+
+GitHub Actions
+
+---
+
+# 118. Architecture Diagram
+
+Include:
+
+SwiftUI
+↓
+ViewModel
+↓
+UseCase
+↓
+Repository
+↓
+Remote / Local
+
+and:
+
+URLSession → Supabase
+
+SwiftData → cache
+
+---
+
+# 119. Key Engineering Decisions
+
+Document:
+
+Why no Supabase SDK?
+
+Why SwiftData is cache?
+
+Why current balance isn't persisted?
+
+Why transfer is separate from income/expense?
+
+Why Face ID is not backend auth?
+
+Why offline writes were deferred?
+
+These are excellent interview conversation starters.
+
+---
+
+# 120. Setup Instructions
+
+Reviewer should know:
+
+Requirements
+
+Xcode version
+
+iOS minimum
+
+clone repo
+
+configure xcconfig
+
+Supabase setup
+
+run migrations
+
+run project
+
+run tests
+
+---
+
+# 121. Security Notes
+
+README should explicitly say:
+
+No real banking credentials
+
+No real card numbers
+
+Publishable key only
+
+Secret/service-role key never in client
+
+JWT protected with Keychain
+
+RLS enabled
+
+---
+
+# 122. Testing Section
+
+Explain:
+
+Domain tests
+
+Repository tests
+
+Network tests
+
+SwiftData in-memory tests
+
+UI tests
+
+Include sample:
+
+swift test-like concept / Xcode command
+
+or xcodebuild test command.
+
+---
+
+# 123. Known Limitations
+
+This is a strength, not weakness.
+
+Document:
+
+single currency
+
+no real bank integration
+
+anonymous accounts not recoverable after identity loss
+
+no offline writes
+
+no recurring transactions
+
+no custom categories
+
+Reviewer sees scope discipline.
+
+---
+
+# 124. Roadmap
+
+Future:
+
+Sign in with Apple
+
+Budgets
+
+Recurring transactions
+
+Widgets
+
+Multi-currency
+
+Custom categories
+
+Do not implement everything before portfolio launch.
+
+---
+
+# 125. Architecture Decision Records
+
+docs/
+architecture/
+
+ADR-001-remote-authoritative-data.md
+
+ADR-002-manual-dependency-injection.md
+
+ADR-003-swiftdata-cache-boundary.md
+
+ADR-004-local-vs-remote-authentication.md
+
+ADR-005-derived-account-balances.md
+
+Keep each short:
+
+Context
+Decision
+Alternatives
+Consequences
+
+---
+
+# 126. Screenshots
+
+Create consistent device screenshots.
+
+Use demo data.
+
+Avoid personal/random values.
+
+Example:
+
+Total Balance
+₺38,240
+
+Monthly Spending
+₺12,480
+
+Accounts:
+Main Account
+Savings
+Credit Card
+
+Professional data.
+
+---
+
+# 127. Repository Cleanup
+
+Before public launch:
+
+remove TODO garbage
+
+remove commented code
+
+remove debug prints
+
+remove dead files
+
+check git history for secrets
+
+check .gitignore
+
+check xcconfig safety
+
+check test status
+
+check README links
+
+---
+
+# 128. GitHub Actions
+
+Minimum workflow:
+
+checkout
+
+select Xcode
+
+build
+
+run unit tests
+
+Potential:
+
+on:
+pull_request
+push main
+
+Badge:
+
+Build Passing
+
+Tests Passing
+
+---
+
+## Suggested Commits
+
+docs: add architecture and setup documentation
+
+docs: document key engineering decisions
+
+chore: add CI build and test workflow
+
+chore: prepare repository for portfolio release
+
+---
+
+# 129. Milestone M7 — Portfolio Release
+
+At this point GitHub link can go on:
+
+CV
+
+LinkedIn
+
+GitHub profile pin
+
+job applications
+
+---
+
+# 130. CV Entry
+
+Recommended structure:
+
+PocketLedger — Personal Finance iOS App
+
+SwiftUI • Swift Concurrency • MVVM • REST • SwiftData
+
+Example bullets:
+
+Built a production-oriented personal finance iOS app using SwiftUI and MVVM with Clean Architecture principles.
+
+Implemented REST networking with URLSession/async-await, Codable DTOs, typed error handling, Supabase authentication and PostgreSQL-backed CRUD.
+
+Designed remote-authoritative persistence with SwiftData caching, Keychain session storage, Face ID protection and offline read fallback.
+
+Created tested financial domain logic for account balances, internal transfers, analytics and rule-based spending insights using Swift Testing.
+
+Keep CV bullets outcome/engineering focused.
+
+Do not write:
+
+"Used SwiftUI, SwiftData, URLSession..."
+
+as disconnected technology list.
+
+---
+
+# 131. LinkedIn Launch Post
+
+Main launch post should show product + engineering.
+
+Suggested content direction:
+
+I’ve been transitioning from product management toward iOS development, and I wanted my portfolio project to be more than a UI clone.
+
+So I built PocketLedger, a personal finance app designed around production-like iOS engineering decisions.
+
+Then mention:
+
+SwiftUI + MVVM
+
+raw URLSession REST integration
+
+SwiftData caching
+
+Face ID + Keychain
+
+Swift Concurrency
+
+Swift Charts
+
+testable domain logic
+
+Include short video.
+
+Do not overclaim:
+
+"production-ready banking app"
+
+Better:
+
+"production-oriented portfolio project"
+
+because it is not a regulated banking application.
+
+---
+
+# 132. GitHub Profile
+
+Pin PocketLedger.
+
+Repository description example:
+
+A production-oriented personal finance iOS app built with SwiftUI, Swift Concurrency, URLSession, SwiftData, LocalAuthentication and Clean Architecture principles.
+
+Topics:
+
+swift
+swiftui
+ios
+mvvm
+clean-architecture
+swiftdata
+urlsession
+swift-concurrency
+swift-charts
+portfolio
+
+---
+
+# 133. Phase 16 — TestFlight
+
+## Goal
+
+Run application like real distributed software.
+
+---
+
+# 134. Before TestFlight
+
+Check:
+
+Bundle identifier
+
+Version:
+1.0.0
+
+Build number
+
+App icon
+
+Launch screen
+
+Privacy descriptions
+
+Face ID usage string
+
+Release configuration
+
+Production Supabase environment
+
+No test bypass in Release
+
+No debug sample data
+
+No service-role key
+
+---
+
+# 135. Physical Device QA
+
+Mandatory:
+
+Face ID
+
+background/relock
+
+network offline
+
+slow network
+
+kill/relaunch
+
+session persistence
+
+transaction CRUD
+
+charts
+
+Dark Mode
+
+Dynamic Type
+
+---
+
+# 136. TestFlight Test Scenarios
+
+Create account
+
+Create expense
+
+Create income
+
+Create transfer
+
+Edit transaction
+
+Delete transaction
+
+Archive account
+
+Go offline
+
+Restart app
+
+Verify cached data
+
+Return online
+
+Verify refresh
+
+---
+
+# 137. TestFlight Feedback
+
+Even if only a few trusted testers:
+
+ask:
+
+Was anything confusing?
+
+Could you create a transaction without explanation?
+
+Did balances make sense?
+
+Did Face ID behavior feel natural?
+
+Could you understand analytics?
+
+Any crash?
+
+Any accessibility/layout issue?
+
+---
+
+# 138. Crash Discipline
+
+Before App Store:
+
+0 known reproducible crashes in primary flows.
+
+Do not chase absolute "never crash" promise.
+
+But known blockers must be fixed.
+
+---
+
+# 139. App Store Preparation
+
+App Name
+
+Subtitle
+
+Description
+
+Keywords
+
+Screenshots
+
+Privacy details
+
+Support URL
+
+Privacy policy URL
+
+App category
+
+Version notes
+
+---
+
+# 140. App Store Privacy
+
+PocketLedger does NOT:
+
+connect bank accounts
+
+collect card numbers
+
+collect CVV
+
+collect banking passwords
+
+Need accurately disclose:
+
+financial tracking data
+
+anonymous account/backend data behavior
+
+Diagnostics if any added later
+
+Never claim "no data collected" without checking actual backend behavior.
+
+---
+
+# 141. App Review Explanation
+
+If needed:
+
+PocketLedger is a manual personal finance tracker.
+
+It does not provide banking services.
+
+It does not transfer real money.
+
+It does not connect to financial institutions.
+
+This avoids reviewer confusion.
+
+---
+
+# 142. Milestone M8 — Distribution Complete
+
+At this stage portfolio demonstrates not only:
+
+coding
+
+but:
+
+build
+test
+release
+distribution
+documentation
+
+experience.
+
+This is meaningful for junior candidates.
+
+---
+
+# 143. Recommended Development Sequence by Feature
+
+The practical order should be:
+
+01
+Project setup
+
+02
+Money / LocalDate
+
+03
+Transaction validation
+
+04
+Balance calculation
+
+05
+NetworkClient
+
+06
+Keychain
+
+07
+Anonymous auth
+
+08
+SessionManager
+
+09
+SwiftData
+
+10
+Account DTO / repository
+
+11
+Account UI
+
+12
+Transaction DTO / repository
+
+13
+Transaction CRUD UI
+
+14
+Face ID
+
+15
+Dashboard
+
+16
+Analytics
+
+17
+Spending Insights
+
+18
+Offline/error states
+
+19
+Testing hardening
+
+20
+Accessibility
+
+21
+README / demo
+
+22
+TestFlight
+
+23
+App Store polish
+
+This order minimizes rework.
+
+---
+
+# 144. Recommended Weekly Shape
+
+This is a sequencing suggestion, not a deadline.
+
+## Iteration 1 — Foundation
+
+Domain
+
+Networking
+
+Auth
+
+SwiftData
+
+Repositories
+
+Outcome:
+
+technical foundation exists.
+
+---
+
+## Iteration 2 — Core Product
+
+Accounts
+
+Transaction CRUD
+
+Face ID
+
+Outcome:
+
+app is genuinely usable.
+
+---
+
+## Iteration 3 — Product Value
+
+Dashboard
+
+Analytics
+
+Insights
+
+Outcome:
+
+app is differentiated.
+
+---
+
+## Iteration 4 — Quality
+
+Offline/error states
+
+Tests
+
+Accessibility
+
+Dark Mode
+
+Outcome:
+
+portfolio quality.
+
+---
+
+## Iteration 5 — Distribution
+
+README
+
+Demo video
+
+CI
+
+TestFlight
+
+App Store preparation
+
+Outcome:
+
+public project.
+
+---
+
+# 145. Don't Build These Too Early
+
+Do not start with:
+
+custom animations
+
+perfect app icon
+
+advanced design system
+
+widgets
+
+budgets
+
+recurring payments
+
+custom categories
+
+Sign in with Apple
+
+multi-currency
+
+background sync
+
+pagination
+
+These can distract from core engineering.
+
+---
+
+# 146. First Important Vertical Slice
+
+Before building Dashboard, prove this:
+
+AccountForm
+↓
+CreateAccountUseCase
+↓
+AccountRepository
+↓
+AccountRemoteDataSource
+↓
+URLSession
+↓
+Supabase
+↓
+PostgreSQL
+↓
+response
+↓
+SwiftData
+↓
+AccountListView
+
+If this works cleanly, architecture is validated.
+
+---
+
+# 147. Second Important Vertical Slice
+
+Then prove:
+
+TransactionForm
+↓
+CreateTransactionUseCase
+↓
+TransactionValidator
+↓
+TransactionRepository
+↓
+POST
+↓
+PostgreSQL
+↓
+SwiftData
+↓
+TransactionList
+↓
+Balance calculation
+
+This proves almost the entire project architecture.
+
+---
+
+# 148. Architecture Checkpoint Before Dashboard
+
+Before proceeding to Dashboard, review:
+
+Are ViewModels getting too large?
+
+Are repositories doing business logic?
+
+Are SwiftData models leaking?
+
+Are DTOs leaking?
+
+Is AppContainer becoming service locator?
+
+Are errors still typed?
+
+Are tests easy to write?
+
+Are actors solving real shared-state problems?
+
+If any answer is bad, refactor here.
+
+Not after app completion.
+
+---
+
+# 149. Definition of Done — Feature Level
+
+A feature is not done when:
+
+"the screen appears."
+
+Feature is done when:
+
+✓ happy path works
+
+✓ loading exists
+
+✓ empty state exists
+
+✓ failure state exists
+
+✓ retries behave
+
+✓ domain rules tested
+
+✓ accessibility labels present
+
+✓ Dark Mode acceptable
+
+✓ no debug logs/secrets
+
+✓ relevant README/docs updated if architecture changed
+
+---
+
+# 150. Definition of Done — Repository Level
+
+Portfolio release is done when:
+
+PRODUCT
+
+✓ Account CRUD
+
+✓ Transaction CRUD
+
+✓ Income
+
+✓ Expense
+
+✓ Transfers
+
+✓ Dashboard
+
+✓ Analytics
+
+✓ Spending Insights
+
+✓ Profile/settings basics
+
+
+SECURITY
+
+✓ Face ID
+
+✓ Keychain
+
+✓ RLS
+
+✓ Session refresh
+
+
+DATA
+
+✓ Real REST backend
+
+✓ SwiftData cache
+
+✓ Offline reads
+
+✓ Derived balances
+
+
+QUALITY
+
+✓ Error states
+
+✓ Empty states
+
+✓ Loading states
+
+✓ Unit tests
+
+✓ UI smoke tests
+
+✓ Dark Mode
+
+✓ Accessibility
+
+
+PORTFOLIO
+
+✓ README
+
+✓ Architecture diagram
+
+✓ Screenshots
+
+✓ Demo video
+
+✓ CI
+
+✓ ADRs
+
+✓ CV entry
+
+✓ LinkedIn post
+
+
+DISTRIBUTION
+
+✓ TestFlight
+
+✓ Release configuration
+
+✓ App Store-ready metadata
+
+---
+
+# 151. Suggested GitHub Issues
+
+Foundation:
+
+[Core] Set up environment configuration
+
+[Domain] Implement Money value object
+
+[Domain] Implement LocalDate
+
+[Domain] Add transaction validation
+
+[Domain] Add account balance calculation
+
+[Network] Implement URLSession NetworkClient
+
+[Security] Add Keychain session storage
+
+[Auth] Implement anonymous Supabase session
+
+[Persistence] Configure SwiftData cache
+
+
+Accounts:
+
+[Accounts] Add remote data source
+
+[Accounts] Add local store
+
+[Accounts] Add repository
+
+[Accounts] Build account list
+
+[Accounts] Build create/edit form
+
+[Accounts] Support archival
+
+
+Transactions:
+
+[Transactions] Add remote data source
+
+[Transactions] Add repository
+
+[Transactions] Build list
+
+[Transactions] Build form
+
+[Transactions] Add update
+
+[Transactions] Add delete
+
+[Transactions] Add transfer
+
+[Transactions] Add search/filter
+
+
+Dashboard:
+
+[Dashboard] Add aggregation use case
+
+[Dashboard] Build financial summary UI
+
+
+Analytics:
+
+[Analytics] Monthly spending calculation
+
+[Analytics] Category distribution
+
+[Analytics] Income expense trend
+
+[Analytics] Spending insight engine
+
+
+Quality:
+
+[Quality] Offline state
+
+[Quality] Error mapping
+
+[Quality] Accessibility audit
+
+[Quality] Dark Mode audit
+
+[Testing] UI smoke flow
+
+[CI] Build and test GitHub Action
+
+
+Portfolio:
+
+[Docs] README
+
+[Docs] Architecture diagram
+
+[Docs] ADRs
+
+[Portfolio] Record demo video
+
+[Release] TestFlight
+
+---
+
+# 152. What to Show in Interview
+
+Have the following files ready.
+
+1.
+
+SpendingInsightEngine.swift
+
+Shows:
+business logic
+testability
+
+2.
+
+DefaultTransactionRepository.swift
+
+Shows:
+remote/local coordination
+error handling
+
+3.
+
+URLSessionNetworkClient.swift
+
+Shows:
+network fundamentals
+
+4.
+
+SessionManager.swift
+
+Shows:
+actors
+concurrency
+Keychain/auth
+
+5.
+
+TransactionFormViewModel.swift
+
+Shows:
+MVVM
+presentation state
+
+6.
+
+TransactionRecord.swift + TransactionDTO.swift + Transaction.swift
+
+Shows:
+data boundary separation
+
+7.
+
+AccountBalanceCalculatorTests.swift
+
+Shows:
+financial correctness
+
+8.
+
+GitHub Actions workflow
+
+Shows:
+engineering discipline
+
+---
+
+# 153. Likely Interview Questions
+
+Prepare answers for:
+
+Why SwiftData and not Core Data?
+
+Why did you separate DTO/domain/local models?
+
+Why isn't current balance in the database?
+
+Why are transfers not expenses?
+
+Why not Supabase SDK?
+
+Why anonymous auth?
+
+How do you handle token refresh?
+
+Why is SessionManager an actor?
+
+What happens when network succeeds but local save fails?
+
+What happens offline?
+
+Why don't you support offline writes?
+
+Why is ViewModel @MainActor?
+
+How did you test networking?
+
+Why no singleton APIManager?
+
+Why no DI library?
+
+How does RLS protect users?
+
+How would you add Sign in with Apple?
+
+How would you add multi-currency?
+
+How would you scale to 100k transactions?
+
+The repository should make these answers easy.
+
+---
+
+# 154. Stretch Goals — Only After Portfolio Release
+
+P1:
+
+Sign in with Apple
+
+Budget limits
+
+Recurring transactions
+
+Better filters
+
+Widgets
+
+Notifications
+
+Export CSV
+
+
+P2:
+
+Custom categories
+
+Multi-currency
+
+FX rates
+
+Offline mutation queue
+
+Delta sync
+
+Server-side aggregation
+
+Cloud account recovery
+
+Do not delay portfolio release for these.
+
+---
+
+# 155. Biggest Risks During Development
+
+## Risk — Architecture fatigue
+
+You may spend too long designing abstractions.
+
+Rule:
+
+Build the simplest abstraction that satisfies the architecture boundary.
+
+---
+
+## Risk — UI perfection before data correctness
+
+Do not polish gradients while CRUD is unstable.
+
+Priority:
+
+correctness
+architecture
+testing
+UX
+visual polish
+
+---
+
+## Risk — Tutorial-driven code
+
+Do not copy:
+
+APIManager.shared
+PersistenceController.shared
+
+simply because tutorials use them.
+
+Stay consistent with current architecture.
+
+---
+
+## Risk — Huge ViewModels
+
+When ViewModel starts doing:
+
+analytics
+validation
+mapping
+HTTP
+formatting
+
+stop.
+
+Move responsibility to correct layer.
+
+---
+
+## Risk — Testing too late
+
+Do not finish app then "add tests."
+
+Write tests alongside:
+
+Money
+Validator
+Balance
+Repositories
+Analytics
+Insights
+
+---
+
+# 156. First Coding Session
+
+When implementation starts, do only this:
+
+1. Create Xcode project.
+
+2. Configure Swift 6 / iOS 17.
+
+3. Create folder structure.
+
+4. Add AppEnvironment.
+
+5. Add xcconfig.
+
+6. Add Logger foundation.
+
+7. Create Money.swift.
+
+8. Create MoneyTests.swift.
+
+9. Commit.
+
+Recommended first meaningful commit:
+
+feat: add Money value object with minor-unit precision
+
+This gives an immediate green test and starts the repository with a real domain decision.
+
+---
+
+# 157. First Ten Meaningful Commits
+
+A clean early Git history could look like:
+
+1.
+chore: initialize PocketLedger project
+
+2.
+chore: configure application environments
+
+3.
+feat: add Money value object and currency model
+
+4.
+feat: add LocalDate calendar-safe representation
+
+5.
+feat: add transaction domain and validation rules
+
+6.
+feat: implement account balance calculations
+
+7.
+feat: implement typed URLSession network client
+
+8.
+test: add deterministic HTTP networking tests
+
+9.
+feat: add Keychain-backed session storage
+
+10.
+feat: implement anonymous Supabase authentication
+
+This history already tells a story.
+
+---
+
+# 158. Final Portfolio Narrative
+
+PocketLedger should ultimately tell this engineering story:
+
+I started with the financial domain instead of the UI.
+
+Money is represented exactly.
+
+Balances are derived rather than duplicated.
+
+Income, expenses and internal transfers have explicit semantics.
+
+Then I built a typed native networking layer using URLSession and async/await.
+
+Authentication sessions are secured in Keychain and refreshed through an actor-isolated session manager.
+
+PostgreSQL is the remote source of truth.
+
+SwiftData provides local cached reads.
+
+Repositories coordinate remote and local state.
+
+Views only render presentation state.
+
+Business logic is independently tested.
+
+Face ID protects local access.
+
+Swift Charts visualizes data generated by tested domain calculations.
+
+Failures, offline behavior, accessibility and Dark Mode are treated as product requirements rather than final polish.
+
+Finally, the application is distributed through TestFlight and documented as a real engineering project.
+
+That is the story the repository should communicate.
+
+---
+
+# 159. Final Build Sequence
+
+Do not deviate from this without a clear reason:
+
+FOUNDATION
+↓
+Domain Models
+↓
+Domain Tests
+↓
+NetworkClient
+↓
+Auth + Keychain
+↓
+SwiftData
+↓
+Repositories
+↓
+Accounts Vertical Slice
+↓
+Transactions Vertical Slice
+↓
+Face ID / Security
+↓
+Dashboard
+↓
+Analytics
+↓
+Spending Insights
+↓
+Failure / Offline UX
+↓
+Test Hardening
+↓
+Accessibility
+↓
+Dark Mode
+↓
+README / CI / Demo
+↓
+TestFlight
+↓
+App Store
+
+---
+
+# 160. Final Roadmap Principle
+
+PocketLedger should not be developed as:
+
+"Which iOS technology can I add next?"
+
+It should be developed as:
+
+"What is the smallest next piece that makes the product more correct, testable, and complete?"
+
+The portfolio goal remains:
+
+Not:
+
+"I built several SwiftUI screens."
+
+But:
+
+"I designed, implemented, tested, documented and shipped a complete iOS application with real product and engineering tradeoffs."
+
+That is the standard every phase of this roadmap should support.
