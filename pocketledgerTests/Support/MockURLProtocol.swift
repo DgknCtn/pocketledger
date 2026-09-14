@@ -27,8 +27,17 @@ final class MockURLProtocol: URLProtocol, @unchecked Sendable {
             return
         }
 
+        // URLSession sometimes moves a POST/PATCH body into
+        // `httpBodyStream` rather than delivering it via `httpBody` on the
+        // request the protocol sees — reconstruct it so callers can always
+        // read `request.httpBody`.
+        var observedRequest = request
+        if observedRequest.httpBody == nil, let stream = request.httpBodyStream {
+            observedRequest.httpBody = Data(readingRemainderOf: stream)
+        }
+
         do {
-            let (response, data) = try handler(request)
+            let (response, data) = try handler(observedRequest)
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
             client?.urlProtocol(self, didLoad: data)
             client?.urlProtocolDidFinishLoading(self)
@@ -38,4 +47,20 @@ final class MockURLProtocol: URLProtocol, @unchecked Sendable {
     }
 
     override func stopLoading() {}
+}
+
+private extension Data {
+    init(readingRemainderOf stream: InputStream) {
+        self.init()
+        stream.open()
+        defer { stream.close() }
+
+        let bufferSize = 4_096
+        var buffer = [UInt8](repeating: 0, count: bufferSize)
+        while stream.hasBytesAvailable {
+            let bytesRead = stream.read(&buffer, maxLength: bufferSize)
+            guard bytesRead > 0 else { break }
+            append(buffer, count: bytesRead)
+        }
+    }
 }

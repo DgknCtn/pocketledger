@@ -219,4 +219,75 @@ struct NetworkClientTests {
             try await client.send(APIRequest<FixtureResponse>(service: .data, path: "accounts", method: .get))
         }
     }
+
+    // MARK: - DefaultAuthRemoteDataSource
+    //
+    // Also exercised through `MockURLProtocol`, so these live in this same
+    // `.serialized` suite rather than a separate one — two suites each
+    // individually serialized can still run *relative to each other* in
+    // parallel and clobber the shared handler.
+
+    private func makeAuthDataSource() -> DefaultAuthRemoteDataSource {
+        DefaultAuthRemoteDataSource(networkClient: makeClient(authorizationProvider: nil))
+    }
+
+    @Test func anonymousSignUpPostsToSignupWithoutAuthorization() async throws {
+        let capturedRequest = OSAllocatedUnfairLock<URLRequest?>(initialState: nil)
+        MockURLProtocol.requestHandler = { request in
+            capturedRequest.withLock { $0 = request }
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (response, Data(Self.fixtureSessionJSON.utf8))
+        }
+
+        _ = try await makeAuthDataSource().createAnonymousSession()
+
+        let request = try #require(capturedRequest.withLock { $0 })
+        #expect(request.url?.absoluteString == "https://example.supabase.co/auth/v1/signup")
+        #expect(request.httpMethod == "POST")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
+        #expect(request.value(forHTTPHeaderField: "apikey") == "sb_publishable_test")
+    }
+
+    @Test func refreshSessionSendsGrantTypeQueryAndRefreshTokenBody() async throws {
+        let capturedRequest = OSAllocatedUnfairLock<URLRequest?>(initialState: nil)
+        MockURLProtocol.requestHandler = { request in
+            capturedRequest.withLock { $0 = request }
+            let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (response, Data(Self.fixtureSessionJSON.utf8))
+        }
+
+        _ = try await makeAuthDataSource().refreshSession(refreshToken: "old-refresh-token")
+
+        let request = try #require(capturedRequest.withLock { $0 })
+        let components = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!
+        #expect(components.path == "/auth/v1/token")
+        #expect(components.queryItems?.first(where: { $0.name == "grant_type" })?.value == "refresh_token")
+
+        let bodyJSON = try JSONSerialization.jsonObject(with: request.httpBody ?? Data()) as? [String: String]
+        #expect(bodyJSON?["refresh_token"] == "old-refresh-token")
+    }
+
+    @Test func decodesAuthSessionResponse() async throws {
+        stub(statusCode: 200, json: Self.fixtureSessionJSON)
+
+        let dto = try await makeAuthDataSource().createAnonymousSession()
+
+        #expect(dto.accessToken == "the-access-token")
+        #expect(dto.refreshToken == "the-refresh-token")
+        #expect(dto.expiresIn == 3_600)
+        #expect(dto.user.isAnonymous == true)
+    }
+
+    private static let fixtureSessionJSON = """
+    {
+      "access_token": "the-access-token",
+      "token_type": "bearer",
+      "expires_in": 3600,
+      "refresh_token": "the-refresh-token",
+      "user": {
+        "id": "20e9b6f4-45d4-4c5a-b243-98680e14ebff",
+        "is_anonymous": true
+      }
+    }
+    """
 }
