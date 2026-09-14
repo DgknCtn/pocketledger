@@ -1,50 +1,62 @@
 import SwiftUI
 import os
 
-/// Composition root for the visible app.
+/// Composition root for the visible app. Face ID app-lock gates the one
+/// real feature that exists so far (Accounts) — Dashboard/Transactions/
+/// Analytics/Profile and the full `TabView` shell land in later phases.
 ///
-/// Face ID app-lock is wired up here; the real `TabView` shell, dashboard
-/// content, networking and SwiftData-backed data still don't exist yet
-/// (added once Accounts/Transactions features land) — `readyContent` is a
-/// placeholder proving the lock flow gates *something*.
+/// `accountListViewModel` is built once in `init` (not computed in `body`,
+/// which SwiftUI re-evaluates on every state change including scenePhase
+/// and lock transitions) — rebuilding it per render would silently reset
+/// its loaded data and re-fetch on every re-render.
 struct AppRootView: View {
-    @State private var appLockController = AppLockController(
-        localAuthenticationService: DefaultLocalAuthenticationService()
-    )
+    @State private var appContainer: AppContainer
+    @State private var accountListViewModel: AccountListViewModel
     @Environment(\.scenePhase) private var scenePhase
 
-    private let environment = AppEnvironment.resolve()
+    init() {
+        let container = AppContainer()
+        _appContainer = State(initialValue: container)
+        #if DEBUG
+        if container.environment == .uiTesting {
+            container.appLockController.bypassForUITesting()
+        }
+        #endif
+        _accountListViewModel = State(
+            initialValue: AccountListViewModel(
+                loadAccountsUseCase: LoadAccountsUseCase(
+                    accountRepository: container.accountRepository,
+                    transactionRepository: container.transactionRepository
+                ),
+                createAccountUseCase: CreateAccountUseCase(accountRepository: container.accountRepository),
+                updateAccountUseCase: UpdateAccountUseCase(accountRepository: container.accountRepository),
+                accountRepository: container.accountRepository,
+                walletProfileRepository: container.walletProfileRepository
+            )
+        )
+    }
 
     var body: some View {
         ZStack {
-            if appLockController.isLocked {
-                LockView(appLockController: appLockController)
+            if appContainer.appLockController.isLocked {
+                LockView(appLockController: appContainer.appLockController)
             } else {
-                readyContent
+                AccountListView(viewModel: accountListViewModel)
             }
 
-            if scenePhase != .active && !appLockController.isLocked {
+            if scenePhase != .active && !appContainer.appLockController.isLocked {
                 PrivacyShieldView()
             }
         }
-        .animation(.default, value: appLockController.isLocked)
+        .animation(.default, value: appContainer.appLockController.isLocked)
         .onChange(of: scenePhase) { _, newPhase in
-            appLockController.handleScenePhaseChange(newPhase)
+            appContainer.appLockController.handleScenePhaseChange(newPhase)
         }
         .onAppear {
-            AppLogger.general.info("App launched in \(String(describing: environment), privacy: .public) environment")
+            AppLogger.general.info(
+                "App launched in \(String(describing: appContainer.environment), privacy: .public) environment"
+            )
         }
-    }
-
-    private var readyContent: some View {
-        VStack(spacing: 8) {
-            Text("PocketLedger")
-                .font(.largeTitle.bold())
-            Text("Foundation phase — \(String(describing: environment))")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-        }
-        .padding()
     }
 }
 
