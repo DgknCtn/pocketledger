@@ -1,0 +1,15 @@
+//
+//  Debug.xcconfig
+//  pocketledger
+//
+//  Development environment configuration. This file is intentionally
+//  committed with placeholder values only — see README for how to set up
+//  a personal Supabase development project before Phase 3 (Networking & Auth).
+//  Never commit real secret/service-role keys here.
+//
+
+SUPABASE_URL = https:/$()/YOUR-DEV-PROJECT.supabase.co
+SUPABASE_PUBLISHABLE_KEY = sb_publishable_REPLACE_ME
+
+INFOPLIST_KEY_SupabaseURL = $(SUPABASE_URL)
+INFOPLIST_KEY_SupabasePublishableKey = $(SUPABASE_PUBLISHABLE_KEY)

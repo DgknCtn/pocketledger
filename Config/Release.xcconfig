@@ -1,0 +1,15 @@
+//
+//  Release.xcconfig
+//  pocketledger
+//
+//  Production environment configuration. This file is intentionally
+//  committed with placeholder values only — see README for how to set up
+//  the production Supabase project before shipping to TestFlight.
+//  Never commit real secret/service-role keys here.
+//
+
+SUPABASE_URL = https:/$()/YOUR-PROD-PROJECT.supabase.co
+SUPABASE_PUBLISHABLE_KEY = sb_publishable_REPLACE_ME
+
+INFOPLIST_KEY_SupabaseURL = $(SUPABASE_URL)
+INFOPLIST_KEY_SupabasePublishableKey = $(SUPABASE_PUBLISHABLE_KEY)

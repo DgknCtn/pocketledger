@@ -1,0 +1,31 @@
+# Xcode
+#
+build/
+DerivedData/
+*.moved-aside
+*.pbxuser
+*.xcuserstate
+xcuserdata/
+
+## Xcode Patch
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcworkspace/contents.xcworkspacedata
+/*.gcno
+
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods (not used, kept for safety if ever introduced)
+Pods/
+
+# Secrets — never commit real Supabase keys.
+# Config/Debug.xcconfig and Config/Release.xcconfig ARE committed with
+# placeholder values only; if you replace the placeholders with real
+# secret/service-role keys locally, keep that change out of version control.
+*.xcconfig.local

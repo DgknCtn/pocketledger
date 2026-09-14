@@ -6,13 +6,44 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXContainerItemProxy section */
+		4F4E4AA9564557A1481F78D4 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E37707F63058381F00D06D51 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E37707FD3058381F00D06D51;
+			remoteInfo = pocketledger;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		A7EC09FA6DFBDBBB531E8AF2 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		BF2F57A229A69ADE6CFE3DC5 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		DEF0A30C2712537A9846415C /* pocketledgerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = pocketledgerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E37707FE3058381F00D06D51 /* pocketledger.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = pocketledger.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		913D3F5AA2F34F3C3CE43D52 /* Exceptions for "pocketledger" folder in "pocketledger" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/Info.plist,
+			);
+			target = E37707FD3058381F00D06D51 /* pocketledger */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		14F0F074B48AB32D725243B5 /* pocketledgerTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = pocketledgerTests;
+			sourceTree = "<group>";
+		};
 		E37708003058381F00D06D51 /* pocketledger */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				913D3F5AA2F34F3C3CE43D52 /* Exceptions for "pocketledger" folder in "pocketledger" target */,
+			);
 			path = pocketledger;
 			sourceTree = "<group>";
 		};
@@ -26,13 +57,31 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EFD6F14007D366176760A84F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CA49B1EA628C94DCDA2087DE /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				A7EC09FA6DFBDBBB531E8AF2 /* Debug.xcconfig */,
+				BF2F57A229A69ADE6CFE3DC5 /* Release.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
 		E37707F53058381F00D06D51 = {
 			isa = PBXGroup;
 			children = (
+				CA49B1EA628C94DCDA2087DE /* Config */,
 				E37708003058381F00D06D51 /* pocketledger */,
+				14F0F074B48AB32D725243B5 /* pocketledgerTests */,
 				E37707FF3058381F00D06D51 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -41,6 +90,7 @@
 			isa = PBXGroup;
 			children = (
 				E37707FE3058381F00D06D51 /* pocketledger.app */,
+				DEF0A30C2712537A9846415C /* pocketledgerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -48,6 +98,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		DA29E8E624007BA2CC2492D7 /* pocketledgerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 39C33B9281355E863DCAB68B /* Build configuration list for PBXNativeTarget "pocketledgerTests" */;
+			buildPhases = (
+				D120AB09C631E7B6B67EF862 /* Sources */,
+				EFD6F14007D366176760A84F /* Frameworks */,
+				BCB69EEAFEE70301791F9677 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F77AFB8FA42E1631218FEFCA /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				14F0F074B48AB32D725243B5 /* pocketledgerTests */,
+			);
+			name = pocketledgerTests;
+			packageProductDependencies = (
+			);
+			productName = pocketledgerTests;
+			productReference = DEF0A30C2712537A9846415C /* pocketledgerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 		E37707FD3058381F00D06D51 /* pocketledger */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = E37708093058382000D06D51 /* Build configuration list for PBXNativeTarget "pocketledger" */;
@@ -80,6 +153,10 @@
 				LastSwiftUpdateCheck = 2660;
 				LastUpgradeCheck = 2660;
 				TargetAttributes = {
+					DA29E8E624007BA2CC2492D7 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = E37707FD3058381F00D06D51;
+					};
 					E37707FD3058381F00D06D51 = {
 						CreatedOnToolsVersion = 26.6;
 					};
@@ -100,11 +177,19 @@
 			projectRoot = "";
 			targets = (
 				E37707FD3058381F00D06D51 /* pocketledger */,
+				DA29E8E624007BA2CC2492D7 /* pocketledgerTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		BCB69EEAFEE70301791F9677 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E37707FC3058381F00D06D51 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -115,6 +200,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		D120AB09C631E7B6B67EF862 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E37707FA3058381F00D06D51 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -124,7 +216,53 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		F77AFB8FA42E1631218FEFCA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E37707FD3058381F00D06D51 /* pocketledger */;
+			targetProxy = 4F4E4AA9564557A1481F78D4 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		298690B8B81DEE8F80531776 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PL3KHRGL3B;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dogukancetin.pocketledgerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/pocketledger.app/pocketledger";
+			};
+			name = Debug;
+		};
+		7F455F1E016EFB7BF4D31B1E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = PL3KHRGL3B;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = dogukancetin.pocketledgerTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/pocketledger.app/pocketledger";
+			};
+			name = Release;
+		};
 		E37708073058382000D06D51 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -178,7 +316,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -236,7 +374,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -248,6 +386,7 @@
 		};
 		E377080A3058382000D06D51 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = A7EC09FA6DFBDBBB531E8AF2 /* Debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -255,12 +394,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = PL3KHRGL3B;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = pocketledger/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -270,16 +406,17 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
 		E377080B3058382000D06D51 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = BF2F57A229A69ADE6CFE3DC5 /* Release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -287,12 +424,9 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = PL3KHRGL3B;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = pocketledger/Resources/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -302,10 +436,10 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = nonisolated;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -313,6 +447,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		39C33B9281355E863DCAB68B /* Build configuration list for PBXNativeTarget "pocketledgerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				298690B8B81DEE8F80531776 /* Debug */,
+				7F455F1E016EFB7BF4D31B1E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		E37707F93058381F00D06D51 /* Build configuration list for PBXProject "pocketledger" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
