@@ -13,6 +13,7 @@ struct AccountBalanceCalculatorTests {
             kind: .bank,
             openingBalance: Money(minorUnits: openingMinor, currency: currency),
             isArchived: false,
+            archivedAt: nil,
             createdAt: Date(),
             updatedAt: Date()
         )

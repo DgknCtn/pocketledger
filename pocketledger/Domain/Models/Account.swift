@@ -14,6 +14,9 @@ struct Account: Identifiable, Equatable, Sendable {
     let kind: AccountKind
     let openingBalance: Money
     let isArchived: Bool
+    /// Non-nil exactly when `isArchived` is `true` — mirrors the remote
+    /// `accounts_archive_state_check` constraint.
+    let archivedAt: Date?
     let createdAt: Date
     let updatedAt: Date
 }
